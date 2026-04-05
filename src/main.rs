@@ -4,16 +4,19 @@ use futures::StreamExt;
 use std::fs;
 use std::path::PathBuf;
 use chrono::Local;
+use dotenv::dotenv;
 
-const TOKEN: &str = "your-secret-token-here"; //TODO: should be read from .env
-const KEEP_LAST_N: usize = 5; //TODO: should be read from .env
 const UPLOAD_FOLDER: &str = "uploads";
-const MAX_SIZE: u64 = 10 * 1024 * 1024; // 10 MB
-//TODO: file size limit should be in .env
+
+/// Loads the `.env` file's variables
+fn load_dotenv() -> () {
+    dotenv().expect("Failed to read .env file");
+}
 
 /// Checks that the given token is allowed
 fn verify_token(token: &str) -> bool {
-    TOKEN == token
+    let token_env: String = std::env::var("token").expect("'token' env var not set");
+    token_env == token
 }
 
 /// Sanitize the given string (`filename`).
@@ -44,18 +47,28 @@ enum WriteError {
 }
 
 async fn write_file(filepath: PathBuf, field: Field) -> Result<(), WriteError> {
+    // Create file
     let mut file = match std::fs::File::create(&filepath) {
         Ok(f) => f,
         Err(_) => return Err(WriteError::CannotCreateFile("Failed to create file".to_string())),
     };
 
+    // Prepare to write
     let mut size: u64 = 0;
     let mut field_data = field;
 
+    // Get max size from .env, and convert to bytes
+    let max_file_size_gb: u64 = std::env::var("max_file_size_GB")
+        .expect("'max_file_size_GB' env var not set")
+        .parse()
+        .expect("'max_file_size_GB' was not an u64");
+    let max_file_size: u64 = max_file_size_gb * (1024 * 1024 * 1024);
+
+    // Write
     while let Some(Ok(chunk)) = field_data.next().await {
         size += chunk.len() as u64;
 
-        if size > MAX_SIZE {
+        if size > max_file_size {
             let _ = fs::remove_file(&filepath);
             return Err(WriteError::FileTooLarge("File too large".to_string()));
         }
@@ -147,8 +160,10 @@ async fn upload_file(
             _ => ()
         }
 
+        let max_files: usize = std::env::var("max_files").expect("'max_files' env var not set").parse().expect("'max_files' was not an usize");
+
         // Cleanup old files
-        if let Err(e) = cleanup_old_files(KEEP_LAST_N) {
+        if let Err(e) = cleanup_old_files(max_files) {
             eprintln!("Cleanup error: {}", e);
         }
 
@@ -168,10 +183,12 @@ async fn health_check() -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    load_dotenv();
+
     // Create upload directory
     fs::create_dir_all(UPLOAD_FOLDER).ok();
 
-    println!("Starting server on http://127.0.0.1:8080"); //TODO
+    println!("Starting server on http://0.0.0.0:8080");
 
     HttpServer::new(|| {
         App::new()
@@ -182,7 +199,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/health", web::get().to(health_check))
             )
     })
-    .bind("127.0.0.1:8080")? //TODO
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }

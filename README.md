@@ -5,6 +5,13 @@ It is secured with a token.
 Note: the base of the source code was AI-generated
 
 ## Run
+Create `.env`:
+```
+cp .env.example .env
+```
+
+Then edit the `.env` file.
+
 ### Development
 ```
 cargo run
