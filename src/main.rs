@@ -10,7 +10,8 @@ const UPLOAD_FOLDER: &str = "uploads";
 
 /// Loads the `.env` file's variables
 fn load_dotenv() -> () {
-    dotenv().expect("Failed to read .env file");
+    // dotenv().expect("Failed to read .env file");
+    dotenv().ok();
 }
 
 /// Checks that the given token is allowed

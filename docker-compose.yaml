@@ -1,0 +1,21 @@
+services:
+  backup-upload-server:
+    restart: unless-stopped
+    container_name: backup-upload-server
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    env_file: .env
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      token: ${token}
+      max_files: ${max_files}
+      max_file_size_GB: ${max_file_size_GB}
+
+    volumes:
+      - ./volume:/app/uploads

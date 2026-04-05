@@ -18,7 +18,16 @@ cargo run
 ```
 
 ### Production
-TODO
+First, create the volume folder and chown it:
+```
+mkdir volume
+chown 10001:10001 volume/
+```
+
+Then, run with docker:
+```
+docker compose up -d
+```
 
 ## Endpoints
 ```
