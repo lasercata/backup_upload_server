@@ -168,6 +168,8 @@ async fn upload_file(
             eprintln!("Cleanup error: {}", e);
         }
 
+        println!("File uploaded: {}", final_filename);
+
         return HttpResponse::Ok().json(serde_json::json!({
             "message": "File uploaded successfully",
             "filename": final_filename
