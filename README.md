@@ -2,7 +2,7 @@
 This is a simple server with an endpoint to upload backup files.
 It is secured with a token.
 
-Note: the base of the source code was AI-generated
+Note: the base of the source code was AI-generated.
 
 ## Run
 Create `.env`:
@@ -47,3 +47,10 @@ curl \
     -F "file=@filename.ext" \
     http://localhost:8080/upload
 ```
+
+## Limitations
+For the moment, if you upload *n* files in the same second, with the same name, each will be overwritten by the next one.
+This is because only a time stamp (precise to the second) is prepended to the filename.
+
+## LICENSE
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
